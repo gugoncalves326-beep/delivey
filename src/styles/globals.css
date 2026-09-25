@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Design tokens centralizados. Nenhum componente deve usar valores de cor
+  diretamente — sempre referenciar estas variáveis (via classes Tailwind
+  mapeadas em tailwind.config.ts).
+*/
+:root {
+  /* Painel administrativo — tema premium escuro */
+  --panel-bg: #0B0B0F;
+  --panel-bg-secondary: #12121A;
+  --panel-card: #171720;
+  --panel-border: rgba(148, 163, 184, 0.12);
+
+  --brand-purple: #7C3AED;
+  --brand-purple-secondary: #9333EA;
+  --brand-gold: #D4AF37;
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+
+  --status-success: #22C55E;
+  --status-error: #EF4444;
+  --status-warning: #F59E0B;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /*
+    Site público da loja — identidade separada e comercial.
+    Valores padrão; cada empresa poderá sobrescrever logo/cores/banner
+    via store_settings em uma etapa futura.
+  */
+  --store-bg: #FFFFFF;
+  --store-card: #F8FAFC;
+  --store-accent: #7C3AED;
+  --store-text: #0F172A;
+  --store-text-secondary: #64748B;
+}
+
+body {
+  background-color: var(--panel-bg);
+  color: var(--text-primary);
+}
