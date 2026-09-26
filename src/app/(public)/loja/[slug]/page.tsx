@@ -3,6 +3,17 @@ import { Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/store/product-card";
 import { CartButton } from "@/components/store/cart-button";
+import { OrderStatusBanner } from "@/components/store/order-status-banner";
+import type { Enums } from "@/types/database";
+
+type OrderStatus = Enums<"order_status">;
+
+const activeOrderStatuses: OrderStatus[] = [
+  "pending",
+  "confirmed",
+  "preparing",
+  "out_for_delivery",
+];
 
 export default async function StorePage({ params }: { params: { slug: string } }) {
   const supabase = createClient();
@@ -16,6 +27,39 @@ export default async function StorePage({ params }: { params: { slug: string } }
 
   if (!company) {
     notFound();
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let customerId: string | null = null;
+  let activeOrder: { id: string; status: OrderStatus; created_at: string } | null = null;
+
+  if (user) {
+    const { data: customer } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("company_id", company.id)
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    if (customer) {
+      customerId = customer.id;
+
+      const { data: recentOrders } = await supabase
+        .from("orders")
+        .select("id, status, created_at")
+        .eq("company_id", company.id)
+        .eq("customer_id", customer.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+
+      activeOrder =
+        (recentOrders as { id: string; status: OrderStatus; created_at: string }[] | null)?.find(
+          (order) => activeOrderStatuses.includes(order.status)
+        ) ?? null;
+    }
   }
 
   const [{ data: storeSettings }, { data: categories }, { data: products }] = await Promise.all([
@@ -58,6 +102,12 @@ export default async function StorePage({ params }: { params: { slug: string } }
         </div>
         <CartButton slug={company.slug} />
       </header>
+
+      <OrderStatusBanner
+        initialOrder={activeOrder}
+        customerId={customerId}
+        slug={company.slug}
+      />
 
       <div className="px-4 py-3">
         <div className="flex items-center gap-2 rounded-full border border-black/10 bg-store-card px-4 py-2.5">
