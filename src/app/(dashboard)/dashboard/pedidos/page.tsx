@@ -33,7 +33,7 @@ export default async function PedidosPage() {
           description="Pedidos feitos pelos clientes na sua loja pública vão aparecer aqui."
         />
       ) : (
-        <OrdersTable orders={orders} />
+        <OrdersTable orders={orders} companyId={company!.id} />
       )}
     </div>
   );

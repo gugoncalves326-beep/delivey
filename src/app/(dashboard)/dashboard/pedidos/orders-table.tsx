@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Select } from "@/components/ui/select";
 import { Table, Thead, Tr, Th, Td } from "@/components/ui/table";
 import { updateOrderStatus, markPaymentPaid } from "./actions";
+import { createClient } from "@/lib/supabase/client";
 import type { Enums } from "@/types/database";
 
 type OrderStatus = Enums<"order_status">;
@@ -30,8 +31,6 @@ interface OrderRow {
     change_for: number | null;
   }> | null;
   order_items: OrderItemRow[] | null;
-  // Tipagem solta de propósito: não sabemos ainda os nomes exatos das
-  // colunas de endereço, então tratamos como objeto genérico.
   addresses: Record<string, any> | null;
 }
 
@@ -67,12 +66,16 @@ const nextStatusOptions: OrderStatus[] = [
   "cancelled",
 ];
 
+const orderSelectQuery = `id, status, total, created_at,
+  customers(full_name),
+  payments(status, payment_method, change_for),
+  order_items(id, product_name, unit_price, quantity),
+  addresses(*)`;
+
 function formatBRL(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
 
-// Tenta achar o valor certo entre nomes de coluna comuns, já que não
-// temos o schema exato de "addresses" à mão.
 function pick(address: Record<string, any> | null, keys: string[]): string {
   if (!address) return "";
   for (const key of keys) {
@@ -103,9 +106,79 @@ function formatAddress(address: Record<string, any> | null): string {
   return reference ? `${base} (Ref: ${reference})` : base;
 }
 
-export function OrdersTable({ orders }: { orders: OrderRow[] }) {
+export function OrdersTable({
+  orders: initialOrders,
+  companyId,
+}: {
+  orders: OrderRow[];
+  companyId: string;
+}) {
+  const [orders, setOrders] = useState<OrderRow[]>(initialOrders);
+  const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+
+    const channel = supabase
+      .channel(`store-orders-${companyId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `company_id=eq.${companyId}`,
+        },
+        async (payload) => {
+          const newId = (payload.new as { id: string }).id;
+
+          const { data: fullOrder } = await supabase
+            .from("orders")
+            .select(orderSelectQuery)
+            .eq("id", newId)
+            .maybeSingle();
+
+          if (fullOrder) {
+            setOrders((current) => [fullOrder as unknown as OrderRow, ...current]);
+            setNewOrderIds((current) => new Set(current).add(newId));
+            setTimeout(() => {
+              setNewOrderIds((current) => {
+                const next = new Set(current);
+                next.delete(newId);
+                return next;
+              });
+            }, 5000);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "orders",
+          filter: `company_id=eq.${companyId}`,
+        },
+        (payload) => {
+          const updated = payload.new as { id: string; status: OrderStatus; total: number };
+
+          setOrders((current) =>
+            current.map((order) =>
+              order.id === updated.id
+                ? { ...order, status: updated.status, total: updated.total }
+                : order
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [companyId]);
 
   function handleStatusChange(orderId: string, status: OrderStatus) {
     startTransition(async () => {
@@ -116,6 +189,16 @@ export function OrdersTable({ orders }: { orders: OrderRow[] }) {
   function handleMarkPaid(orderId: string) {
     startTransition(async () => {
       await markPaymentPaid(orderId);
+      setOrders((current) =>
+        current.map((order) =>
+          order.id === orderId && order.payments?.[0]
+            ? {
+                ...order,
+                payments: [{ ...order.payments[0], status: "paid" as PaymentStatus }],
+              }
+            : order
+        )
+      );
     });
   }
 
@@ -139,10 +222,14 @@ export function OrdersTable({ orders }: { orders: OrderRow[] }) {
         {orders.map((order) => {
           const payment = order.payments?.[0] ?? null;
           const isExpanded = expandedId === order.id;
+          const isNew = newOrderIds.has(order.id);
 
           return (
             <>
-              <Tr key={order.id}>
+              <Tr
+                key={order.id}
+                className={isNew ? "animate-pulse bg-brand-purple-secondary/10" : undefined}
+              >
                 <Td>{order.customers?.full_name ?? "Cliente"}</Td>
                 <Td>
                   {order.status === "pending" ? (
