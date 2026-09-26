@@ -5,7 +5,9 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Table, Thead, Tr, Th, Td } from "@/components/ui/table";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentCompany } from "@/lib/dashboard/company";
-import type { OrderStatus } from "@/types/database";
+import type { Enums } from "@/types/database";
+
+type OrderStatus = Enums<"order_status">;
 
 const statusLabel: Record<OrderStatus, string> = {
   pending: "Pendente",

@@ -52,3 +52,46 @@ export async function linkOwnerToCompany(formData: FormData) {
 
   revalidatePath("/admin/empresas");
 }
+export async function saveCompany(formData: FormData) {
+  const id = (formData.get("id") as string)?.trim();
+  const name = (formData.get("name") as string)?.trim();
+  const slug = (formData.get("slug") as string)?.trim();
+  const status = formData.get("status") as "active" | "suspended" | null;
+
+  if (!name || !slug) {
+    throw new Error("Preencha o nome e o identificador (slug) da empresa.");
+  }
+
+  const supabase = createClient();
+
+  if (id) {
+    // Edição de empresa existente
+    const { error } = await supabase
+      .from("companies")
+      .update({
+        name,
+        slug,
+        ...(status ? { status } : {}),
+      })
+      .eq("id", id);
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error("Já existe uma empresa com esse identificador (slug).");
+      }
+      throw new Error("Erro ao atualizar a empresa.");
+    }
+  } else {
+    // Criação de empresa nova
+    const { error } = await supabase.from("companies").insert({ name, slug });
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new Error("Já existe uma empresa com esse identificador (slug).");
+      }
+      throw new Error("Erro ao criar a empresa.");
+    }
+  }
+
+  revalidatePath("/admin/empresas");
+}

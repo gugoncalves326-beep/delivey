@@ -172,7 +172,7 @@ export function CheckoutForm({
 
     const { data: order, error: rpcError } = await supabase.rpc("checkout_create_order", {
       p_company_id: companyId,
-      p_address_id: addressId,
+      p_address_id: addressId as string,
       p_items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
     });
 

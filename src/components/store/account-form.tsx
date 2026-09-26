@@ -49,8 +49,8 @@ export function AccountForm({
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    const metaFullName = (user?.user_metadata?.full_name as string) || null;
-    const metaPhone = (user?.user_metadata?.phone as string) || null;
+    const metaFullName = (user?.user_metadata?.full_name as string) || undefined;
+    const metaPhone = (user?.user_metadata?.phone as string) || undefined;
 
     // Vincula (ou atualiza) o registro de customers desta empresa ao
     // usuário autenticado. Nunca confia em company_id vindo pronto —
