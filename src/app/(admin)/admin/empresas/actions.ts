@@ -52,11 +52,14 @@ export async function linkOwnerToCompany(formData: FormData) {
 
   revalidatePath("/admin/empresas");
 }
+
 export async function saveCompany(formData: FormData) {
   const id = (formData.get("id") as string)?.trim();
   const name = (formData.get("name") as string)?.trim();
   const slug = (formData.get("slug") as string)?.trim();
   const status = formData.get("status") as "active" | "suspended" | null;
+  const logoUrl = (formData.get("logo_url") as string)?.trim();
+  const bannerUrl = (formData.get("banner_url") as string)?.trim();
 
   if (!name || !slug) {
     throw new Error("Preencha o nome e o identificador (slug) da empresa.");
@@ -72,6 +75,8 @@ export async function saveCompany(formData: FormData) {
         name,
         slug,
         ...(status ? { status } : {}),
+        ...(logoUrl ? { logo_url: logoUrl } : {}),
+        ...(bannerUrl ? { banner_url: bannerUrl } : {}),
       })
       .eq("id", id);
 

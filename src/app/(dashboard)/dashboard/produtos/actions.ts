@@ -23,13 +23,21 @@ export async function saveProduct(formData: FormData) {
   const price = Number(priceRaw) || 0;
   const category_id = String(formData.get("category_id") ?? "").trim() || null;
   const is_available = formData.get("is_available") === "on";
+  const image_url = String(formData.get("image_url") ?? "").trim() || null;
 
   if (!name) throw new Error("O nome do produto é obrigatório.");
 
   if (id) {
     const { error } = await supabase
       .from("products")
-      .update({ name, description, price, category_id, is_available })
+      .update({
+        name,
+        description,
+        price,
+        category_id,
+        is_available,
+        ...(image_url ? { image_url } : {}),
+      })
       .eq("id", id);
     if (error) throw new Error(error.message);
   } else {
@@ -40,6 +48,7 @@ export async function saveProduct(formData: FormData) {
       price,
       category_id,
       is_available,
+      image_url,
     });
     if (error) throw new Error(error.message);
   }

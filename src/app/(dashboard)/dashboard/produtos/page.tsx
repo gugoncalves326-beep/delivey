@@ -31,7 +31,7 @@ export default async function ProdutosPage() {
       <PageHeader
         title="Produtos"
         description="Gerencie os produtos da sua loja"
-        action={<ProductDialog categories={categories ?? []} />}
+        action={<ProductDialog companyId={company!.id} categories={categories ?? []} />}
       />
 
       {!products || products.length === 0 ? (
@@ -76,7 +76,7 @@ export default async function ProdutosPage() {
                 </Td>
                 <Td>
                   <div className="flex items-center justify-end gap-1">
-                    <ProductDialog categories={categories ?? []} product={product} />
+                    <ProductDialog companyId={company!.id} categories={categories ?? []} product={product} />
                     <DeleteProductButton id={product.id} name={product.name} />
                   </div>
                 </Td>

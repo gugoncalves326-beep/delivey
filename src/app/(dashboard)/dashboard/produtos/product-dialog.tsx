@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Pencil, Loader2 } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
+import { ImageUpload } from "@/components/shared/image-upload";
 import { saveProduct } from "./actions";
 import type { Database } from "@/types/database";
 
@@ -16,18 +17,23 @@ type Product = Database["public"]["Tables"]["products"]["Row"];
 type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 export function ProductDialog({
+  companyId,
   categories,
   product,
 }: {
+  companyId: string;
   categories: Category[];
   product?: Product;
 }) {
   const [open, setOpen] = useState(false);
   const [available, setAvailable] = useState(product?.is_available ?? true);
+  const [imageUrl, setImageUrl] = useState(product?.image_url ?? "");
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   const isEdit = Boolean(product);
+  // caminho estável no Storage: usa o id do produto se existir, ou um id novo gerado agora
+  const uploadPath = `${companyId}/products/${product?.id ?? crypto.randomUUID()}`;
 
   function handleSubmit(formData: FormData) {
     setError(null);
@@ -60,6 +66,12 @@ export function ProductDialog({
       <Modal open={open} onClose={() => setOpen(false)} title={isEdit ? "Editar produto" : "Novo produto"}>
         <form action={handleSubmit} className="space-y-3">
           <input type="hidden" name="id" defaultValue={product?.id ?? ""} />
+          <input type="hidden" name="image_url" value={imageUrl} readOnly />
+
+          <div className="space-y-1.5">
+            <label className="text-xs text-text-secondary">Foto do produto</label>
+            <ImageUpload path={uploadPath} currentUrl={product?.image_url} onUploaded={setImageUrl} aspect="square" />
+          </div>
 
           <div className="space-y-1.5">
             <label className="text-xs text-text-secondary">Nome</label>
