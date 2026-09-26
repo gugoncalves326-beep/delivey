@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { ProductCard } from "@/components/store/product-card";
@@ -135,13 +136,14 @@ export default async function StorePage({ params }: { params: { slug: string } }
         <section className="px-4 py-4">
           <div className="flex gap-3 overflow-x-auto pb-1">
             {categories.map((categoria) => (
-              <div
+              <Link
                 key={categoria.id}
+                href={`/loja/${company.slug}/categoria/${categoria.id}`}
                 className="flex shrink-0 flex-col items-center gap-1.5 rounded-xl bg-store-card px-4 py-3"
               >
                 <div className="h-8 w-8 rounded-full bg-store-accent/10" />
                 <span className="text-xs font-medium">{categoria.name}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
