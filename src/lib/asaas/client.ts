@@ -20,16 +20,24 @@ export async function asaasFetch<T>(path: string, init?: RequestInit): Promise<T
     ...init,
     headers: {
       "Content-Type": "application/json",
+      "User-Agent": "DeliverySaaS/1.0",
       access_token: apiKey,
       ...(init?.headers ?? {}),
     },
   });
 
-  const data = await response.json();
+  const rawText = await response.text();
+  let data: any = null;
+  try {
+    data = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    // resposta não veio em JSON (ex.: erro de infraestrutura, HTML de erro)
+  }
 
   if (!response.ok) {
     const message =
-      data?.errors?.[0]?.description ?? "Erro ao se comunicar com o Asaas.";
+      data?.errors?.[0]?.description ??
+      `Erro ao se comunicar com o Asaas (HTTP ${response.status}): ${rawText.slice(0, 200)}`;
     throw new Error(message);
   }
 
