@@ -7,7 +7,7 @@ function formatBRL(value: number) {
 }
 
 const statusLabels: Record<string, string> = {
-  pending: "Aguardando pagamento",
+  pending: "Aguardando confirmação da loja",
   confirmed: "Confirmado",
   preparing: "Em preparo",
   out_for_delivery: "Saiu para entrega",
