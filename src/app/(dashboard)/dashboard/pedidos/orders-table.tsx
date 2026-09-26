@@ -119,6 +119,10 @@ export function OrdersTable({
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
+    setOrders(initialOrders);
+  }, [initialOrders]);
+
+  useEffect(() => {
     const supabase = createClient();
 
     const channel = supabase
