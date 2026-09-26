@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { ProductCard } from "@/components/store/product-card";
 import { CartButton } from "@/components/store/cart-button";
 import { OrderStatusBanner } from "@/components/store/order-status-banner";
+import { ProductSearch } from "@/components/store/product-search";
 import type { Enums } from "@/types/database";
 
 type OrderStatus = Enums<"order_status">;
@@ -71,7 +70,7 @@ export default async function StorePage({ params }: { params: { slug: string } }
       .maybeSingle(),
     supabase
       .from("categories")
-      .select("id, name, position")
+      .select("id, name, position, image_url")
       .eq("company_id", company.id)
       .order("position", { ascending: true }),
     supabase
@@ -110,26 +109,15 @@ export default async function StorePage({ params }: { params: { slug: string } }
         slug={company.slug}
       />
 
-      <div className="px-4 py-3">
-        <div className="flex items-center gap-2 rounded-full border border-black/10 bg-store-card px-4 py-2.5">
-          <Search className="h-4 w-4 text-store-text-secondary" />
-          <input
-            className="w-full bg-transparent text-sm outline-none placeholder:text-store-text-secondary"
-            placeholder="Buscar produtos..."
-            disabled
-          />
-        </div>
-      </div>
-
       {company.banner_url ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={company.banner_url}
           alt=""
-          className="mx-4 h-32 w-[calc(100%-2rem)] rounded-xl object-cover"
+          className="mx-4 mt-3 h-32 w-[calc(100%-2rem)] rounded-xl object-cover"
         />
       ) : (
-        <div className="mx-4 h-32 rounded-xl bg-gradient-to-r from-store-accent/20 to-store-accent/5" />
+        <div className="mx-4 mt-3 h-32 rounded-xl bg-gradient-to-r from-store-accent/20 to-store-accent/5" />
       )}
 
       {categories && categories.length > 0 && (
@@ -141,7 +129,16 @@ export default async function StorePage({ params }: { params: { slug: string } }
                 href={`/loja/${company.slug}/categoria/${categoria.id}`}
                 className="flex shrink-0 flex-col items-center gap-1.5 rounded-xl bg-store-card px-4 py-3"
               >
-                <div className="h-8 w-8 rounded-full bg-store-accent/10" />
+                {categoria.image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={categoria.image_url}
+                    alt={categoria.name}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-store-accent/10" />
+                )}
                 <span className="text-xs font-medium">{categoria.name}</span>
               </Link>
             ))}
@@ -149,17 +146,7 @@ export default async function StorePage({ params }: { params: { slug: string } }
         </section>
       )}
 
-      {!products || products.length === 0 ? (
-        <div className="px-4 pb-8 pt-6 text-center text-sm text-store-text-secondary">
-          Nenhum produto disponível no momento.
-        </div>
-      ) : (
-        <section className="grid grid-cols-2 gap-3 px-4 pb-8 sm:grid-cols-3">
-          {products.map((produto) => (
-            <ProductCard key={produto.id} produto={produto} />
-          ))}
-        </section>
-      )}
+      <ProductSearch products={products ?? []} />
     </div>
   );
 }

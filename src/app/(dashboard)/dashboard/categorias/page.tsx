@@ -22,7 +22,7 @@ export default async function CategoriasPage() {
       <PageHeader
         title="Categorias"
         description="Organize os produtos da sua loja em categorias"
-        action={<CategoryDialog />}
+        action={<CategoryDialog companyId={company!.id} />}
       />
 
       {!categories || categories.length === 0 ? (
@@ -50,7 +50,7 @@ export default async function CategoriasPage() {
                 </Td>
                 <Td>
                   <div className="flex items-center justify-end gap-1">
-                    <CategoryDialog category={category} />
+                    <CategoryDialog companyId={company!.id} category={category} />
                     <DeleteCategoryButton id={category.id} name={category.name} />
                   </div>
                 </Td>

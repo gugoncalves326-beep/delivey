@@ -11,14 +11,20 @@ export async function saveCategory(formData: FormData) {
   const supabase = createClient();
   const id = String(formData.get("id") ?? "").trim();
   const name = String(formData.get("name") ?? "").trim();
+  const imageUrl = String(formData.get("image_url") ?? "").trim();
 
   if (!name) throw new Error("O nome da categoria é obrigatório.");
 
   if (id) {
-    const { error } = await supabase.from("categories").update({ name }).eq("id", id);
+    const { error } = await supabase
+      .from("categories")
+      .update({ name, image_url: imageUrl || null })
+      .eq("id", id);
     if (error) throw new Error(error.message);
   } else {
-    const { error } = await supabase.from("categories").insert({ company_id: company.id, name });
+    const { error } = await supabase
+      .from("categories")
+      .insert({ company_id: company.id, name, image_url: imageUrl || null });
     if (error) throw new Error(error.message);
   }
 
@@ -30,8 +36,6 @@ export async function deleteCategory(formData: FormData) {
   const id = String(formData.get("id") ?? "");
   if (!id) return;
   const supabase = createClient();
-  // products.category_id tem "on delete set null", então excluir uma
-  // categoria não apaga produtos — só desvincula.
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/dashboard/categorias");
