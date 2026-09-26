@@ -6,6 +6,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/lib/store/cart-context";
+import type { Enums } from "@/types/database";
+
+type PaymentMethod = Enums<"payment_method">;
 
 function formatBRL(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -27,6 +30,12 @@ interface StoreSettings {
   min_order_value: number;
   delivery_fee: number;
 }
+
+const paymentMethodLabel: Record<PaymentMethod, string> = {
+  dinheiro: "Dinheiro",
+  cartao: "Cartão (na entrega)",
+  pix: "Pix (na entrega)",
+};
 
 function translateCheckoutError(message: string) {
   if (message.includes("store is closed")) {
@@ -75,6 +84,9 @@ export function CheckoutForm({
   const [state, setState] = useState("");
   const [complement, setComplement] = useState("");
   const [cepLoading, setCepLoading] = useState(false);
+
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [changeFor, setChangeFor] = useState("");
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +144,10 @@ export function CheckoutForm({
       setError("Não foi possível identificar seu cadastro. Tente recarregar a página.");
       return;
     }
+    if (!paymentMethod) {
+      setError("Selecione uma forma de pagamento.");
+      return;
+    }
 
     setSubmitting(true);
 
@@ -174,6 +190,9 @@ export function CheckoutForm({
       p_company_id: companyId,
       p_address_id: addressId as string,
       p_items: items.map((i) => ({ product_id: i.productId, quantity: i.quantity })),
+      p_payment_method: paymentMethod,
+      p_change_for:
+        paymentMethod === "dinheiro" && changeFor ? Number(changeFor) : undefined,
     });
 
     if (rpcError || !order) {
@@ -328,6 +347,43 @@ export function CheckoutForm({
                 className="w-full rounded-lg border border-black/10 bg-store-bg px-3 py-2 text-sm outline-none focus:border-store-accent"
               />
             </div>
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-3 px-4 pb-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-store-text-secondary">
+          Forma de pagamento (na entrega)
+        </p>
+
+        {(["dinheiro", "cartao", "pix"] as PaymentMethod[]).map((method) => (
+          <label
+            key={method}
+            className="flex cursor-pointer items-center gap-3 rounded-xl border border-black/5 bg-store-card p-3"
+          >
+            <input
+              type="radio"
+              name="paymentMethod"
+              checked={paymentMethod === method}
+              onChange={() => setPaymentMethod(method)}
+            />
+            <span className="text-sm font-medium">{paymentMethodLabel[method]}</span>
+          </label>
+        ))}
+
+        {paymentMethod === "dinheiro" && (
+          <div>
+            <label className="mb-1 block text-xs font-medium text-store-text-secondary">
+              Precisa de troco para quanto? (opcional)
+            </label>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={changeFor}
+              onChange={(e) => setChangeFor(e.target.value)}
+              placeholder="Ex: 50"
+              className="w-full rounded-lg border border-black/10 bg-store-bg px-3 py-2 text-sm outline-none focus:border-store-accent"
+            />
           </div>
         )}
       </section>
