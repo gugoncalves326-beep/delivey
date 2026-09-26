@@ -21,7 +21,7 @@ export function RevenueChart({ data }: { data: RevenuePoint[] }) {
           <XAxis dataKey="label" tickLine={false} axisLine={false} fontSize={12} />
           <YAxis tickLine={false} axisLine={false} fontSize={12} tickFormatter={formatBRLShort} width={44} />
           <Tooltip
-            formatter={(value: number) => formatBRL(value)}
+            formatter={(value) => formatBRL(Number(value))}
             cursor={{ fill: "rgba(0,0,0,0.04)" }}
             contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid rgba(0,0,0,0.08)" }}
           />
