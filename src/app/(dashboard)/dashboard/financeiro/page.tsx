@@ -2,9 +2,10 @@ import { Wallet, TrendingUp, CalendarDays } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/shared/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
+import { RevenueChart } from "@/components/shared/revenue-chart";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentCompany } from "@/lib/dashboard/company";
+import { buildMonthlyRevenue } from "@/lib/dashboard/revenue";
 
 function formatBRL(value: number) {
   return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -27,6 +28,7 @@ export default async function FinanceiroPage() {
   const faturamentoTotal = (orders ?? []).reduce((sum, o) => sum + Number(o.total), 0);
   const pedidosDoMes = (orders ?? []).filter((o) => new Date(o.created_at) >= startOfMonth);
   const faturamentoDoMes = pedidosDoMes.reduce((sum, o) => sum + Number(o.total), 0);
+  const revenueData = buildMonthlyRevenue(orders ?? [], 6);
 
   return (
     <div className="space-y-6">
@@ -43,11 +45,7 @@ export default async function FinanceiroPage() {
           <CardTitle>Evolução do faturamento</CardTitle>
         </CardHeader>
         <CardContent>
-          <EmptyState
-            icon={TrendingUp}
-            title="Sem dados suficientes ainda"
-            description="O gráfico por período aparece aqui assim que houver pedidos concluídos — uma etapa futura."
-          />
+          <RevenueChart data={revenueData} />
         </CardContent>
       </Card>
     </div>
