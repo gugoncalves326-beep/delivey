@@ -12,7 +12,11 @@ export default async function PedidosPage() {
   const { data: orders } = await supabase
     .from("orders")
     .select(
-      "id, status, total, created_at, customers(full_name), payments(status, payment_method, change_for)"
+      `id, status, total, created_at,
+       customers(full_name),
+       payments(status, payment_method, change_for),
+       order_items(id, product_name, unit_price, quantity),
+       addresses(*)`
     )
     .eq("company_id", company!.id)
     .order("created_at", { ascending: false })
